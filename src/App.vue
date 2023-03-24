@@ -8,13 +8,12 @@
 <script>
 import NavigationBar from "@/components/NavigationBar.vue";
 export default {
-  components: { NavigationBar }
-}
-
+  components: { NavigationBar },
+};
 </script>
 
 <style>
-.form-signin {
+/* .form-signin {
   max-width: 330px;
   padding: 15px;
 }
@@ -33,5 +32,5 @@ export default {
   margin-bottom: 10px;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-}
+} */
 </style>

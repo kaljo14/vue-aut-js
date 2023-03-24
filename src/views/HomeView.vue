@@ -1,84 +1,123 @@
-<template class="login-form">
-  {{ message }}
-  <base-v-component goBackText="Обратно към водомери" goBackTo="/" />
-  <v-card v-if="firstCard">
-    <v-card-item>
-      <v-autocomplete
-        v-model="selectedAddress"
-        :items="data.addresses"
-        color="white"
-        item-title="address"
-        item-value="id"
-        label="Select address"
-      ></v-autocomplete>
+<template >
+  <div class="wraper">
+    <v-card v-if="firstCard">
+      <v-card-title>{{ message }}</v-card-title>
+      <v-card-item>
+        <v-autocomplete
+          v-model="selectedAddress"
+          :items="data.addresses"
+          item-title="address"
+          item-value="id"
+          label="Select address"
+        ></v-autocomplete>
+      </v-card-item>
 
-      <v-autocomplete
-        v-if="selectedAddress"
-        :items="getMeters(selectedAddress)"
-        color="white"
-        item-title="meter_number"
-        item-value="id"
-        label="Select a meter"
-      ></v-autocomplete>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          class="successGradient"
+          width="140px"
+          style="float: right"
+          @click="toggleInputCard"
+        >
+          <span> напред</span>
+        </v-btn>
+      </v-card-actions>
+    </v-card>
 
-      <!-- <v-text-field
-          label="Водомер"
-          autocomplete="off"
-          readonly
-          dense
-          v-model="meterReading.meter_number "
-          v-on="on"
+    <v-card v-if="secondCard">
+      <v-card-item>
+        <div v-if="selectedAddress">
+          <div
+            v-for="meter in getMeters(selectedAddress)"
+            :key="meter.meter_number"
+          >
+            <!-- <p>Number {{ meter }}</p> -->
+            <v-text-field
+              v-model="meter.readings"
+              :rules="[required, validateMinLength, validateNumeric]"
+              :label="`Meter number:` + meter.meter_number"
+              required
+              color="#3446eb"
+              placeholder="0000000000"
+              variant="underlined"
+            ></v-text-field>
+          </div>
+        </div>
+
+        <v-alert
+          v-else
+          density="compact"
+          type="warning"
+          title="No address selected !"
+          text="Please Select a address"
+        >
+        </v-alert>
+      </v-card-item>
+
+      <v-card-actions>
+        <v-btn
+          class="successGradient"
+          width="140px"
+          style="float: right"
+          @click="togglePrevCard"
+        >
+          <span>Назад</span>
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+          class="successGradient"
+          width="140px"
+          style="float: right"
+          @click="toggleConfirmCard"
+        >
+          <span> напред</span>
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
+    <v-card v-if="confirmCard">
+      <v-card-title> Please confirm Information</v-card-title>
+
+      <v-card-item>
+        <div
+          v-for="meter in getMeters(selectedAddress)"
+          :key="meter.meter_number"
+        >
+          <p>Number {{ meter.meter_number }} : {{ meter.readings }}</p>
+          <!-- <v-text-field
+          :label="meter.readings"
+          disabled
+          placeholder="meter.readdings.reading_value"
         ></v-text-field> -->
+        </div>
+      </v-card-item>
+      <v-card-actions>
+        <v-btn
+          class="successGradient"
+          width="140px"
+          style="float: right"
+          @click="toggleInputCard"
+        >
+          <span>Назад</span>
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+          class="successGradient"
+          width="140px"
+          style="float: right"
+          @click="sendMeterReadings(getMeters(selectedAddress))"
+        >
+          <span>Запази</span>
+        </v-btn>
+      </v-card-actions>
+    </v-card>
 
-      <!-- <v-text-field
-                      label="Водомер"
-                      height="30"
-                      autocomplete="off"
-                      v-on="on"
-                      v-model="getMeters(selectedAddress).model_number"
-                      readonly
-                      dense
-                    >
-
-                          <v-text-field
-                  label="СВО идентификатор"
-                  v-model="waterMeterData.svoId"
-                  autocomplete="off"
-                  readonly
-                  dense
-                /> -->
-    </v-card-item>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn
-        class="successGradient"
-        width="140px"
-        style="float: right"
-        @click="toggleNextCard"
-      >
-        <span> напред</span>
-      </v-btn>
-    </v-card-actions>
-    <!-- 
-  <div>
-      <h1>Enter Meter Reading</h1>
-      <meter-reading-input v-model="reading" />
-      <button @click="submit">Submit</button>
-    </div> -->
-  </v-card >
- 
-  <v-card v-if="secondCard">
-    <v-card-item>
-      <v-autocomplete
-        v-model="selectedAddress"
-        :items="data.addresses"
-        color="white"
-        item-title="address"
-        item-value="id"
-        label="watermeter"
-      ></v-autocomplete>
-    </v-card-item>
-  </v-card>
+    <v-alert v-if="showSuccessMsg" type="success" class="text-center">
+      <h4>Вие успешно изпратихте показанията си !</h4>
+      <v-btn @click="refreshPage">OK</v-btn>
+    </v-alert>
+  </div>
 </template>
 
 <script>
@@ -91,6 +130,11 @@ export default {
   components: {
     // MetersReadingInput,
   },
+  methods: {
+    refreshPage() {
+      window.location.reload();
+    },
+  },
   setup() {
     const message = ref("You are not logged in!");
     const store = useStore();
@@ -99,15 +143,73 @@ export default {
     const selectedAddress = ref(null);
     const firstCard = ref(true);
     const secondCard = ref(false);
+    const confirmCard = ref(false);
+    const showSuccessMsg = ref(false);
 
     const getMeters = (addressId) => {
       const address = data.value.addresses.find((a) => a.id === addressId);
       return address ? address.meter_readings : [];
     };
+    // const getReadings = (meterId, addressID) => {
+    //   const address = data.value.addresses.find((a) => a.id === addressId);
+    //   const readings = address.find((a) => a.id === meterId);
+    //   return readings ? readings.readings : [];
+    // };
 
-    const toggleNextCard = () => {
-      firstCard.value != firstCard.value;
-      secondCard.value != secondCard.value;
+    const toggleInputCard = () => {
+      firstCard.value = false;
+      secondCard.value = true;
+      confirmCard.value = false;
+    };
+    const togglePrevCard = () => {
+      firstCard.value = true;
+      secondCard.value = false;
+      confirmCard.value = false;
+    };
+    const toggleConfirmCard = () => {
+      firstCard.value = false;
+      secondCard.value = false;
+      confirmCard.value = true;
+    };
+    const required = (value) => {
+      return !!value || "This field is required";
+    };
+    const validateMinLength = (value) => {
+      if (value && value.length < 8) {
+        return "Minimum length is 8 characters";
+      }
+    };
+    const validateNumeric = (value) => {
+      if (value && !/^\d+$/.test(value)) {
+        return "Input must be numeric";
+      }
+    };
+    const sendMeterReadings = (object) => {
+      showSuccessMsg.value = true;
+      confirmCard.value = false;
+      console.log(object);
+      fetch(
+        "http://localhost:8080/http://127.0.0.1:5000/api/user/addReadings",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(object),
+        }
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log(data);
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch request:", error);
+        });
     };
 
     onMounted(async () => {
@@ -129,7 +231,7 @@ export default {
         }
 
         console.log(data_respons);
-        message.value = `Hi ${data_respons.name}`;
+        message.value = `Здравей ${data_respons.name}`;
 
         data.value = data_respons;
         // addresses.value.push(...data_respons.addresses);
@@ -146,16 +248,25 @@ export default {
       addresses,
       selectedAddress,
       getMeters,
-      toggleNextCard,
+      toggleInputCard,
       secondCard,
-      firstCard
+      firstCard,
+      togglePrevCard,
+      required,
+      validateMinLength,
+      validateNumeric,
+      confirmCard,
+      toggleConfirmCard,
+      sendMeterReadings,
+      showSuccessMsg,
     };
   },
 };
 </script>
 <style scoped>
-.body {
-  background-color: #eeeeee;
+.wraper {
+  width: 40%;
+  margin: 0 auto;
 }
 .successGradient {
   background-color: #36a498; /* For browsers that do not support gradients */
