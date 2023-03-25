@@ -1,12 +1,13 @@
 <template>
   <v-card class="mx-auto px-6 py-8" max-width="344">
+    <v-card-title class="text-center">Account Login</v-card-title>
     <v-form v-model="form" @submit.prevent="submit">
       <v-text-field
         v-model="data.client_number"
         :rules="[required]"
         class="mb-2"
         clearable
-        label="Абонаментен Номер"
+        label="Client Number"
       ></v-text-field>
 
       <v-text-field
@@ -14,10 +15,17 @@
         :readonly="loading"
         :rules="[required]"
         clearable
-        label="ЕГН"
+        label="EGN"
       ></v-text-field>
 
-      <br />
+      <v-alert
+        v-if="errorMsg"
+        density="compact"
+        type="error"
+        :text="errorMsg"
+        class="alert-msg"
+      >
+      </v-alert>
 
       <v-btn
         :disabled="!form"
@@ -56,7 +64,7 @@
 </template>
 
 <script>
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
 export default {
@@ -66,6 +74,8 @@ export default {
       client_number: "",
       egn_hash: "",
     });
+    const errorMsg = ref("");
+
     const router = useRouter();
     // access_token and saves it as cookie
     // const submit = async () => {
@@ -85,27 +95,42 @@ export default {
 
     ///takes access_token and saves it in storage
     const submit = async () => {
-      const response = await fetch(
-        "http://localhost:8080/http://127.0.0.1:5000/api/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+      try {
+        const response = await fetch(
+          "http://localhost:8080/http://127.0.0.1:5000/api/login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          }
+        );
+
+        const result = await response.json();
+
+        if (result.message !== undefined) {
+          errorMsg.value = result.message;
+        } else {
+          const token = result.access_token;
+          // if (token === undefined){displayErrorMsg}
+          // Store the token in local storage
+          localStorage.setItem("access_token", token);
+
+          await router.push("/");
         }
-      );
-
-      const result = await response.json();
-      const token = result.access_token;
-
-      // Store the token in local storage
-      localStorage.setItem("access_token", token);
-
-      await router.push("/");
+      } catch (error) {
+        console.error("Error occurred during fetch:", error);
+      }
     };
     return {
       data,
       submit,
+      errorMsg,
     };
   },
 };
 </script>
+<style scoped>
+.alert-msg {
+  margin-bottom: 5px;
+}
+</style>

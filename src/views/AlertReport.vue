@@ -1,7 +1,7 @@
 <template>
   <v-card class="mx-auto px-6 py-8" max-width="344">
     <v-card-title class="text-center"> Report Alert</v-card-title>
-    <v-form v-model="form" @submit.prevent="submit">
+    <v-form v-model="form" @submit.prevent="reportAlert(data)">
       <v-text-field
         v-model="data.alert_description"
         :rules="[required]"
@@ -18,9 +18,10 @@
         label="Location"
       ></v-text-field>
 
-      <p>here: {{ gelocation.latitude }}</p>
+      <!-- <p>here: {{ data.latitude }} {{ data.photo }}</p> -->
 
       <v-file-input
+        readonly
         v-model="data.photo"
         accept="image/*"
         label="Take a photo"
@@ -29,17 +30,17 @@
         prepend-icon="mdi-camera"
         capture="camera"
       ></v-file-input>
-
-      <v-btn
-        :disabled="!form"
-        block
-        color="error"
-        size="large"
-        type="submit"
-        variant="elevated"
-      >
-        Send Alert
-      </v-btn>
+      <v-card-actions>
+        <v-btn
+          block
+          color="error"
+          size="large"
+          type="submit"
+          variant="elevated"
+        >
+          Send Alert
+        </v-btn>
+      </v-card-actions>
     </v-form>
   </v-card>
 </template>
@@ -54,13 +55,11 @@ export default {
       alert_description: "",
       alert_location_description: "",
       photo: null,
-    });
-    const required = [(v) => !!v || "This field is required"];
-
-    const gelocation = reactive({
       latitude: null,
       longitude: null,
     });
+    const required = [(v) => !!v || "This field is required"];
+
     const error = ref(null);
 
     const getGeolocation = () => {
@@ -68,8 +67,8 @@ export default {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             console.log(position);
-            gelocation.latitude = position.coords.latitude;
-            gelocation.longitude = position.coords.longitude;
+            data.latitude = position.coords.latitude;
+            data.longitude = position.coords.longitude;
           },
           (err) => {
             error.value = err.message;
@@ -79,6 +78,41 @@ export default {
         error.value = "Geolocation is not supported by this browser.";
       }
     };
+
+    const reportAlert = (data) => {
+      const formData = new FormData();
+      formData.append("alert_description", data.alert_description);
+      formData.append(
+        "alert_location_description",
+        data.alert_location_description
+      );
+      formData.append("latitude", data.latitude);
+      formData.append("longitude", data.longitude);
+      console.log(data.photo);
+      if (data.photo) {
+        const file = new File([data.photo[0]], data.photo[0].name);
+        formData.append("photo", file);
+      }
+
+      fetch("http://localhost:8080/http://127.0.0.1:5000/api/report-alert", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to create alert.");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Alert created:", data);
+          // do something with the response data, like showing a success message
+        })
+        .catch((error) => {
+          console.error("Error creating alert:", error);
+          // show an error message to the user
+        });
+    };
     onMounted(getGeolocation);
 
     return {
@@ -86,8 +120,19 @@ export default {
       required,
       error,
       getGeolocation,
-      gelocation,
+
+      reportAlert,
     };
   },
 };
 </script>
+<style >
+/* #app
+  > main
+  > div
+  > form
+  > div.v-input.v-input--horizontal.v-input--density-default.v-file-input.mb-2
+  > div.v-input__control {
+  display: none;
+} */
+</style>

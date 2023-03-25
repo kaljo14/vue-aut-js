@@ -23,19 +23,23 @@
   </nav> -->
   <v-layout class="overflow-visible" style="height: 56px">
     <v-bottom-navigation grow v-model="value" active bg-color="#36a498">
-      <v-btn @click="$router.push('/login')">
-        <v-icon>mdi-history</v-icon>
+      <v-btn @click="$router.push('/login')" v-if="!auth">
+        <v-icon>mdi-login</v-icon>
         Login
       </v-btn>
 
-      <v-btn @click="$router.push('/singup')">
-        <v-icon>mdi-heart</v-icon>
+      <v-btn @click="$router.push('/singup')" v-if="!auth">
+        <v-icon>mdi-account-plus-outline</v-icon>
 
         Sign up
       </v-btn>
+      <v-btn @click="logout" v-else>
+        <v-icon>mdi-logout</v-icon>
 
+        <span>Log out</span>
+      </v-btn>
       <v-btn @click="$router.push('/alert')">
-        <v-icon>mdi-map-marker</v-icon>
+        <v-icon>mdi-pipe-leak</v-icon>
 
         <span>Report Alert</span>
       </v-btn>
@@ -47,12 +51,13 @@
 <script>
 import { computed } from "vue";
 import { useStore } from "vuex";
-
+import { useRouter } from "vue-router";
 export default {
   name: "NavigationBar",
 
   setup() {
     const store = useStore();
+    const router = useRouter();
 
     const auth = computed(() => store.state.authenticated);
 
@@ -66,6 +71,7 @@ export default {
     //   });
     // }
     const logout = () => {
+      router.push("/login");
       localStorage.removeItem("access_token");
       store.dispatch("setAuth", false);
     };
