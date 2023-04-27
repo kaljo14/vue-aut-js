@@ -108,7 +108,7 @@ export default {
         formData.append("photo", file);
       }
 
-      fetch("http://localhost:8080/http://127.0.0.1:5000/api/report-alert", {
+      fetch("http://38.242.215.225:5000/api/report-alert", {
         method: "POST",
         body: formData,
       })

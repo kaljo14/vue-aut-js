@@ -100,14 +100,11 @@ export default {
     ///takes access_token and saves it in storage
     const submit = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8080/http://127.0.0.1:5000/api/login",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          }
-        );
+        const response = await fetch("http://38.242.215.225:5000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
 
         const result = await response.json();
 

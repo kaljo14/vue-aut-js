@@ -244,16 +244,13 @@ export default {
       confirmCard.value = false;
 
       console.log(object);
-      fetch(
-        "http://localhost:8080/http://127.0.0.1:5000/api/user/addReadings",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(object),
-        }
-      )
+      fetch("http://38.242.215.225:5000/api/user/addReadings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(object),
+      })
         .then((response) => {
           if (!response.ok) {
             throw new Error("Network response was not ok");
@@ -280,7 +277,7 @@ export default {
       try {
         const token = localStorage.getItem("access_token");
         const response = await fetch(
-          "http://localhost:8080/http://127.0.0.1:5000/api/users/total",
+          "http://38.242.215.225:5000/api/users/total",
           {
             headers: {
               "Content-Type": "application/json",
@@ -319,7 +316,7 @@ export default {
 
       try {
         const response = await fetch(
-          "http://localhost:8080/http://127.0.0.1:5000/detect_objects",
+          "http://38.242.215.225:5000/detect_objects",
           {
             method: "POST",
             body: formData,
