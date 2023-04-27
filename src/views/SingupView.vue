@@ -92,7 +92,7 @@ export default {
         body: JSON.stringify(data),
       });
 
-      await router.push("/login");
+      await router.push("/");
     };
 
     return {

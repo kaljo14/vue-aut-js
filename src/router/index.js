@@ -6,12 +6,12 @@ import AlertReport from '@/views/AlertReport.vue'
 
 const routes = [
   {
-    path: '/',
-    name: 'home',
+    path: '/home',
+    name: 'HomeView',
     component: HomeView
   },
     {
-    path: '/login',
+    path: '/',
     name: 'LoginView',
     component: LoginView
   },

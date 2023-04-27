@@ -1,4 +1,8 @@
 <template>
+  <!-- <div id="app">
+    <button id="install-button" style="display: none;">Add to Home Screen</button>
+
+  </div> -->
   <v-card class="mx-auto px-6 py-8" max-width="344">
     <v-card-title class="text-center">Account Login</v-card-title>
     <v-form v-model="form" @submit.prevent="submit">
@@ -115,7 +119,7 @@ export default {
           // Store the token in local storage
           localStorage.setItem("access_token", token);
 
-          await router.push("/");
+          await router.push("/home");
         }
       } catch (error) {
         console.error("Error occurred during fetch:", error);

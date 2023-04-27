@@ -1,4 +1,4 @@
-<template >
+<template>
   <div class="wraper">
     <v-card v-if="firstCard">
       <v-card-title class="text-center">{{ message }}</v-card-title>
@@ -66,7 +66,7 @@
               ><v-text-field
                 style="width: 200%; margin-right: 10px"
                 v-model="meter.readings"
-                :rules="[required, validateMinLength, validateNumeric]"
+                :rules="[required]"
                 :label="`Meter number:` + meter.meter_number"
                 required
                 color="#339e93"
@@ -84,16 +84,22 @@
                   flex-direction: row-reverse;
                   align-items: stretch;
                   font-size: 20px;
-
                   flex-wrap: nowrap;
                 "
                 class="my-file-input"
                 variant="underlined"
-                v-model="data.photo"
+                v-model="photos[meter.meter_number]"
                 accept="image/*"
                 :rules="[required]"
                 prepend-icon="mdi-camera"
                 capture="camera"
+                @change="
+                  uploadPhotos(
+                    getMeters(selectedAddress),
+                    meter.meter_number,
+                    $event
+                  )
+                "
               ></v-file-input>
             </v-col>
           </v-row>
@@ -192,6 +198,8 @@ export default {
     const secondCard = ref(false);
     const confirmCard = ref(false);
     const showSuccessMsg = ref(false);
+    const photos = ref({});
+    const meterReadingPhoto = ref([]);
 
     const getMeters = (addressId) => {
       const address = data.value.addresses.find((a) => a.id === addressId);
@@ -234,6 +242,7 @@ export default {
     const sendMeterReadings = (object) => {
       showSuccessMsg.value = true;
       confirmCard.value = false;
+
       console.log(object);
       fetch(
         "http://localhost:8080/http://127.0.0.1:5000/api/user/addReadings",
@@ -295,7 +304,39 @@ export default {
       } catch (e) {
         await store.dispatch("setAuth", false);
       }
+      message,
+        (newValue, oldValue) => {
+          console.log(`New value: ${newValue}, old value: ${oldValue}`);
+        };
     });
+
+    const uploadPhotos = async (meters, meterID, event) => {
+      const photo = event.target.files[0];
+      if (!photo) return;
+      const formData = new FormData();
+
+      formData.append("photo", photo);
+
+      try {
+        const response = await fetch(
+          "http://localhost:8080/http://127.0.0.1:5000/detect_objects",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const data = await response.json();
+        console.log(data);
+        // Find the meter in the current selected address using the meterID
+        meters.forEach((meter) => {
+          if (meter.meter_number === meterID) {
+            meter.readings = data;
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
     return {
       message,
@@ -314,13 +355,16 @@ export default {
       toggleConfirmCard,
       sendMeterReadings,
       showSuccessMsg,
+      uploadPhotos,
+      photos,
+      meterReadingPhoto,
     };
   },
 };
 </script>
 <style scoped>
 .wraper {
-  width: 40%;
+  width: 60%;
   margin: 0 auto;
 }
 .successGradient {

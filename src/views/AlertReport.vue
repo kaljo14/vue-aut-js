@@ -13,20 +13,18 @@
       <v-text-field
         v-model="data.alert_location_description"
         :readonly="loading"
-        :rules="[required]"
         clearable
         label="Location"
       ></v-text-field>
 
       <!-- <p>here: {{ data.latitude }} {{ data.photo }}</p> -->
-
+      <!-- <CameraComponent></CameraComponent> -->
       <v-file-input
         readonly
         v-model="data.photo"
         accept="image/*"
         label="Take a photo"
         class="mb-2"
-        :rules="[required]"
         prepend-icon="mdi-camera"
         capture="camera"
       ></v-file-input>
@@ -43,14 +41,23 @@
       </v-card-actions>
     </v-form>
   </v-card>
+  <v-alert v-if="alertSent" type="success" class="mb-4">
+    Alert sent successfully!
+  </v-alert>
+  <v-alert v-if="errorMsg" type="error" class="mb-4">
+    Please enter a description as the field is required !
+  </v-alert>
 </template>
 
 <script>
 import { reactive, ref, onMounted } from "vue";
-
+// import CameraComponent from "@/components/CameraComponent.vue";
 export default {
   name: "AlertReport",
+  // components: { CameraComponent },
   setup() {
+    var errorMsg = ref(false);
+    var alertSent = ref(false);
     const data = reactive({
       alert_description: "",
       alert_location_description: "",
@@ -61,6 +68,13 @@ export default {
     const required = [(v) => !!v || "This field is required"];
 
     const error = ref(null);
+    const resetData = () => {
+      data.alert_description = "";
+      data.alert_location_description = "";
+      data.photo = null;
+      data.latitude = null;
+      data.longitude = null;
+    };
 
     const getGeolocation = () => {
       if (navigator.geolocation) {
@@ -88,7 +102,7 @@ export default {
       );
       formData.append("latitude", data.latitude);
       formData.append("longitude", data.longitude);
-      console.log(data.photo);
+      console.log(data.latitude);
       if (data.photo) {
         const file = new File([data.photo[0]], data.photo[0].name);
         formData.append("photo", file);
@@ -100,12 +114,22 @@ export default {
       })
         .then((response) => {
           if (!response.ok) {
+            errorMsg.value = true;
+            setTimeout(() => {
+              errorMsg.value = false;
+            }, 1000);
             throw new Error("Failed to create alert.");
           }
           return response.json();
         })
         .then((data) => {
           console.log("Alert created:", data);
+          resetData();
+          alertSent.value = true;
+          setTimeout(() => {
+            alertSent.value = false;
+          }, 10000);
+
           // do something with the response data, like showing a success message
         })
         .catch((error) => {
@@ -120,13 +144,14 @@ export default {
       required,
       error,
       getGeolocation,
-
+      alertSent,
       reportAlert,
+      errorMsg,
     };
   },
 };
 </script>
-<style >
+<style  scoped>
 /* #app
   > main
   > div

@@ -23,7 +23,7 @@
   </nav> -->
   <v-layout class="overflow-visible" style="height: 56px">
     <v-bottom-navigation grow v-model="value" active bg-color="#36a498">
-      <v-btn @click="$router.push('/login')" v-if="!auth">
+      <v-btn @click="$router.push('/')" v-if="!auth">
         <v-icon>mdi-login</v-icon>
         Login
       </v-btn>
@@ -37,6 +37,11 @@
         <v-icon>mdi-logout</v-icon>
 
         <span>Log out</span>
+      </v-btn>
+      <v-btn @click="$router.push('/home')" v-if="auth">
+        <v-icon>mdi-gauge</v-icon>
+
+        <span>Water Meter Report </span>
       </v-btn>
       <v-btn @click="$router.push('/alert')">
         <v-icon>mdi-pipe-leak</v-icon>
@@ -71,7 +76,7 @@ export default {
     //   });
     // }
     const logout = () => {
-      router.push("/login");
+      router.push("/");
       localStorage.removeItem("access_token");
       store.dispatch("setAuth", false);
     };
