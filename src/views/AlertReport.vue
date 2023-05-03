@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto px-6 py-8" max-width="344">
+  <v-card class="mx-auto px-6 py-8 card-comp" max-width="344">
     <v-card-title class="text-center"> Report Alert</v-card-title>
     <v-form v-model="form" @submit.prevent="reportAlert(data)">
       <v-text-field
@@ -108,7 +108,7 @@ export default {
         formData.append("photo", file);
       }
 
-      fetch("http://38.242.215.225:5000/api/report-alert", {
+      fetch("https://wmapi.dron.bg/api/report-alert", {
         method: "POST",
         body: formData,
       })
@@ -160,4 +160,11 @@ export default {
   > div.v-input__control {
   display: none;
 } */
+.card-comp {
+  width: 90%;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 </style>

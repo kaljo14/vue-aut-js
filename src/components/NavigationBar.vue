@@ -22,7 +22,13 @@
     </div>
   </nav> -->
   <v-layout class="overflow-visible" style="height: 56px">
-    <v-bottom-navigation grow v-model="value" active bg-color="#36a498">
+    <v-bottom-navigation
+      grow
+      v-model="value"
+      active
+      bg-color="#36a498"
+      class="bottom-nav"
+    >
       <v-btn @click="$router.push('/')" v-if="!auth">
         <v-icon>mdi-login</v-icon>
         Login
@@ -87,3 +93,9 @@ export default {
   },
 };
 </script>
+<style>
+.bottom-nav {
+  height: 5em !important;
+  padding-bottom: 1em;
+}
+</style>

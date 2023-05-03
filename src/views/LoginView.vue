@@ -3,7 +3,7 @@
     <button id="install-button" style="display: none;">Add to Home Screen</button>
 
   </div> -->
-  <v-card class="mx-auto px-6 py-8" max-width="344">
+  <v-card class="mx-auto px-6 py-8 card-comp" max-width="344">
     <v-card-title class="text-center">Account Login</v-card-title>
     <v-form v-model="form" @submit.prevent="submit">
       <v-text-field
@@ -100,7 +100,7 @@ export default {
     ///takes access_token and saves it in storage
     const submit = async () => {
       try {
-        const response = await fetch("http://38.242.215.225:5000/api/login", {
+        const response = await fetch("https://wmapi.dron.bg/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -133,5 +133,12 @@ export default {
 <style scoped>
 .alert-msg {
   margin-bottom: 5px;
+}
+.card-comp {
+  width: 90%;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 </style>

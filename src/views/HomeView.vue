@@ -1,7 +1,7 @@
 <template>
   <div class="wraper">
-    <v-card v-if="firstCard">
-      <v-card-title class="text-center">{{ message }}</v-card-title>
+    <v-card v-if="firstCard && auth">
+      <v-card-title class="text-center card-comp">{{ message }}</v-card-title>
       <v-card-item>
         <v-autocomplete
           v-model="selectedAddress"
@@ -89,7 +89,7 @@
                 class="my-file-input"
                 variant="underlined"
                 v-model="photos[meter.meter_number]"
-                accept="image/*"
+                accept="image/heic,image/png,image/jpeg"
                 :rules="[required]"
                 prepend-icon="mdi-camera"
                 capture="camera"
@@ -100,7 +100,8 @@
                     $event
                   )
                 "
-              ></v-file-input>
+              >
+              </v-file-input>
             </v-col>
           </v-row>
         </div>
@@ -169,17 +170,21 @@
       <v-btn @click="refreshPage">OK</v-btn>
     </v-alert>
   </div>
+  <LoadingPopup :show="isLoading"></LoadingPopup>
 </template>
 
 <script>
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import heic2any from "heic2any";
+import LoadingPopup from "@/components/LoadingPopup.vue";
 // import MeterReadingInput from "@/components/MetersReadingInput.vue";
 
 export default {
   name: "HomeView",
   components: {
+    LoadingPopup,
     // MetersReadingInput,
   },
   methods: {
@@ -200,6 +205,7 @@ export default {
     const showSuccessMsg = ref(false);
     const photos = ref({});
     const meterReadingPhoto = ref([]);
+    const isLoading = ref(false);
 
     const getMeters = (addressId) => {
       const address = data.value.addresses.find((a) => a.id === addressId);
@@ -244,7 +250,7 @@ export default {
       confirmCard.value = false;
 
       console.log(object);
-      fetch("http://38.242.215.225:5000/api/user/addReadings", {
+      fetch("https://wmapi.dron.bg/api/user/addReadings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -276,15 +282,12 @@ export default {
     onMounted(async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const response = await fetch(
-          "http://38.242.215.225:5000/api/users/total",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch("https://wmapi.dron.bg/api/users/total", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         let data_respons = await response.json();
         if (data_respons.msg === "Not enough segments") {
@@ -306,33 +309,80 @@ export default {
           console.log(`New value: ${newValue}, old value: ${oldValue}`);
         };
     });
-
+    const auth = computed(() => store.state.authenticated);
     const uploadPhotos = async (meters, meterID, event) => {
-      const photo = event.target.files[0];
-      if (!photo) return;
-      const formData = new FormData();
+      const file = event.target.files[0];
+      if (!file) return;
+      isLoading.value = true;
+      let processedFile = file;
 
-      formData.append("photo", photo);
-
-      try {
-        const response = await fetch(
-          "http://38.242.215.225:5000/detect_objects",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await response.json();
-        console.log(data);
-        // Find the meter in the current selected address using the meterID
-        meters.forEach((meter) => {
-          if (meter.meter_number === meterID) {
-            meter.readings = data;
-          }
-        });
-      } catch (error) {
-        console.log(error);
+      if (file.type === "image/heic" || file.type === "image/heif") {
+        try {
+          processedFile = await heic2any({
+            blob: file,
+            toType: "image/png",
+            quality: 1,
+          });
+        } catch (error) {
+          console.error("Error converting HEIC image:", error);
+          return;
+        }
       }
+
+      const image = new Image();
+      image.src = URL.createObjectURL(processedFile);
+      image.onload = async () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const maxWidth = 800;
+        const maxHeight = 800;
+
+        let newWidth = image.width;
+        let newHeight = image.height;
+
+        if (newWidth > maxWidth) {
+          newHeight = (newHeight * maxWidth) / newWidth;
+          newWidth = maxWidth;
+        }
+
+        if (newHeight > maxHeight) {
+          newWidth = (newWidth * maxHeight) / newHeight;
+          newHeight = maxHeight;
+        }
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        ctx.drawImage(image, 0, 0, newWidth, newHeight);
+
+        canvas.toBlob(async (blob) => {
+          const formData = new FormData();
+          formData.append("photo", blob);
+
+          try {
+            const response = await fetch(
+              "https://wmapi.dron.bg/detect_objects",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+            const data = await response.json();
+            console.log(data);
+            meters.forEach((meter) => {
+              if (meter.meter_number === meterID) {
+                meter.readings = data;
+              }
+            });
+          } catch (error) {
+            console.log(error);
+            isLoading.value = false;
+          } finally {
+            isLoading.value = false;
+          }
+        }, "image/png");
+      };
     };
 
     return {
@@ -355,19 +405,26 @@ export default {
       uploadPhotos,
       photos,
       meterReadingPhoto,
+      isLoading,
+      auth,
     };
   },
 };
 </script>
 <style scoped>
 .wraper {
-  width: 60%;
   margin: 0 auto;
+  width: 90%;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 .successGradient {
   background-color: #36a498; /* For browsers that do not support gradients */
   background-image: linear-gradient(to right, #36a498, #3bcaba);
 }
+
 /* .row-revers {
   display: flex;
   flex-direction: row-reverse;

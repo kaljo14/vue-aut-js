@@ -83,7 +83,7 @@ export default {
     }
 
     const submit = async () => {
-      await fetch("http://38.242.215.225:5000/api/register", {
+      await fetch("https://wmapi.dron.bg/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -106,8 +106,12 @@ export default {
 </script>
 <style>
 .wraper {
-  width: 40%;
   margin: 0 auto;
+  width: 90%;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 .btn-container {
   display: flex;
